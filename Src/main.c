@@ -16,7 +16,7 @@ int main(void) {
     GPIOA_MODER &= ~(3U << 2);
     GPIOA_MODER |=  (1U << 2);
 
-    // PA2 = Output (Buzzer) — ready for when you get one!
+    // PA2 = Output (Buzzer)
     GPIOA_MODER &= ~(3U << 4);
     GPIOA_MODER |=  (1U << 4);
 
@@ -29,11 +29,10 @@ int main(void) {
             // Fast blink LED 5 times as alarm
             for (int i = 0; i < 5; i++) {
                 GPIOA_ODR |=  (1U << 1);  // LED ON
-                // BUZZER LINE — uncomment when you get buzzer:
                 // GPIOA_ODR |= (1U << 2);
                 delay_ms(200);
                 GPIOA_ODR &= ~(1U << 1);  // LED OFF
-                //  BUZZER LINE — uncomment when you get buzzer:
+                //  BUZZER LINE
                 // GPIOA_ODR &= ~(1U << 2);
                 delay_ms(200);
             }
