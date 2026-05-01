@@ -1,74 +1,78 @@
-# PIR Alarm System — STM32F411RE
+```markdown
+# PIR Motion Alarm System — STM32 Nucleo F411RE
 
-Motion-activated alarm built with bare-metal register control. No HAL dependencies — all GPIO configured directly through memory-mapped registers.
+A bare-metal PIR motion detection alarm system built on the STM32 Nucleo F411RE using direct register manipulation (no HAL).
 
----
-
-## What It Does
-
-- Reads PIR sensor signal on PA0
-- On motion detected: blinks LED on PA1 five times as alarm
-- Buzzer on PA2 wired and ready — pending hardware replacement
+When motion is detected, the LED and buzzer trigger together in a fast blink pattern. Motion events are also logged over UART so you can monitor activity in real time from your computer.
 
 ---
 
 ## Hardware
 
 - STM32 Nucleo F411RE
-- PIR Motion Sensor (Keyestudio)
-- LED
-- Active Buzzer 5V (pending replacement)
+- PIR motion sensor
+- LED + 330Ω resistor
+- Active buzzer
 
-| Component | Pin |
-|-----------|-----|
-| PIR Signal | PA0 |
-| LED | PA1 |
-| Buzzer | PA2 |
+---
+
+## Pin Connections
+
+| Component     | Pin  | Notes                        |
+|---------------|------|------------------------------|
+| PIR sensor    | PA0  | Digital input                |
+| LED + Buzzer  | PA1  | Output, shared pin           |
+| UART TX (log) | PA2  | Connected to ST-Link via USB |
 
 ---
 
 ## How It Works
 
-**Clock and GPIO setup**
-```c
-RCC_AHB1ENR |= (1U << 0);   // enable GPIOA clock
+- **PA0** reads the PIR sensor output
+- On motion detected, PA1 pulses HIGH/LOW 5 times (200ms on, 200ms off)
+- **UART2** sends `Motion detected!` and `No motion` messages at 9600 baud over the USB cable
+- No motion → all outputs off
 
-GPIOA_MODER |= (1U << 2);   // PA1 output (LED)
-GPIOA_MODER |= (1U << 4);   // PA2 output (Buzzer)
-GPIOA_MODER &= ~(3U << 0);  // PA0 input (PIR)
+---
+
+## UART Logging
+
+To monitor motion events connect to the Nucleo's virtual COM port:
+
+- **Baud rate:** 9600
+- **Port:** `/dev/tty.usbmodem...` on Mac, `COMx` on Windows
+- Use CoolTerm (Mac) or PuTTY (Windows)
+
+Output example:
+
+System ready
+Motion detected!
+No motion
+Motion detected!
+
+---
+
+## Registers Used
+
+| Register       | Address      | Purpose              |
+|----------------|--------------|----------------------|
+| RCC_AHB1ENR    | 0x40023830   | Enable GPIOA clock   |
+| RCC_APB1ENR    | 0x40023840   | Enable USART2 clock  |
+| GPIOA_MODER    | 0x40020000   | Pin mode config      |
+| GPIOA_ODR      | 0x40020014   | Output data register |
+| GPIOA_IDR      | 0x40020010   | Input data register  |
+| USART2_BRR     | 0x40004408   | Baud rate register   |
+| USART2_CR1     | 0x4000440C   | UART control         |
+
+---
+
+## Build
+
+Open in STM32CubeIDE as an existing project. No HAL or middleware — pure bare-metal C with direct register access.
+
+---
+
+## Author
+
+Mussie Mengsteab — [github.com/musee-00](https://github.com/musee-00)
 ```
-
-**Motion detection loop**
-```c
-if (GPIOA_IDR & (1U << 0)) {
-    // blink LED 5 times
-}
-```
-
----
-
-## Status
-
-- PIR sensor working
-- LED alarm working
-- Buzzer — pending hardware replacement
-
----
-
-## File Structure
-
-| File | Purpose |
-|------|---------|
-| `Src/main.c` | Full implementation — GPIO setup and alarm loop |
-
----
-
-## Build & Flash
-
-Open in **STM32CubeIDE**, build with `Ctrl+B`, flash with `Run`.
-
----
-
-## Stack
-
-**C · STM32F411RE · ARM Cortex-M4 · Bare-metal · No HAL**
